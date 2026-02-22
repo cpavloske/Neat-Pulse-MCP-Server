@@ -96,7 +96,7 @@ This server exposes **37 tools** across 9 categories:
 
 ```bash
 cd ~/Documents/GitHub
-git clone <your-repo-url> neat-pulse-mcp
+git clone https://github.com/cpavloske/Neat-Pulse-MCP-Server.git neat-pulse-mcp
 cd neat-pulse-mcp
 ```
 
