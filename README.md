@@ -129,14 +129,25 @@ npm run build
 
 #### 5. Add to Claude Code
 
+First, get the full path to the project folder by running this inside the project directory:
+
+```bash
+pwd
+```
+
+This will print something like `/Users/yourname/Documents/neat-pulse-mcp`. Copy that output and use it in the command below:
+
 ```bash
 claude mcp add neat-pulse \
   -e NEAT_PULSE_API_KEY=YOUR_API_KEY \
   -e NEAT_PULSE_ORG_ID=YOUR_ORG_ID \
-  -- node ~/Documents/neat-pulse-mcp/build/index.js
+  -- node /paste/your/path/here/build/index.js
 ```
 
 Replace `YOUR_API_KEY` and `YOUR_ORG_ID` with your actual credentials from Pulse **Settings > API keys** and **Settings > Organization**.
+
+> **Example:** If `pwd` printed `/Users/jane/Documents/neat-pulse-mcp`, the end of your command should be:
+> `-- node /Users/jane/Documents/neat-pulse-mcp/build/index.js`
 
 #### 6. Verify
 
@@ -184,11 +195,22 @@ npm run build
 
 #### 5. Add to Claude Code
 
+First, get the full path to the project folder by running this inside the project directory:
+
 ```powershell
-claude mcp add neat-pulse -e NEAT_PULSE_API_KEY=YOUR_API_KEY -e NEAT_PULSE_ORG_ID=YOUR_ORG_ID -- node "$env:USERPROFILE\Documents\neat-pulse-mcp\build\index.js"
+cd
+```
+
+This will print something like `C:\Users\yourname`. Your full project path is that output plus `\Documents\neat-pulse-mcp`. Use it in the command below:
+
+```powershell
+claude mcp add neat-pulse -e NEAT_PULSE_API_KEY=YOUR_API_KEY -e NEAT_PULSE_ORG_ID=YOUR_ORG_ID -- node "C:\paste\your\path\here\build\index.js"
 ```
 
 Replace `YOUR_API_KEY` and `YOUR_ORG_ID` with your actual credentials from Pulse **Settings > API keys** and **Settings > Organization**.
+
+> **Example:** If your username is `jane`, the end of your command should be:
+> `-- node "C:\Users\jane\Documents\neat-pulse-mcp\build\index.js"`
 
 #### 6. Verify
 
