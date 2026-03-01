@@ -287,6 +287,10 @@ Neat devices report the following sensor data (varies by device model):
 **API returns 404:**
 - Double check your Organization ID in Pulse Settings
 
+## Acknowledgements
+
+This project was inspired by [neat-pulse-mcp](https://github.com/tristan-gfr/neat-pulse-mcp) by tristan-gfr.
+
 ## License
 
 MIT
