@@ -56,7 +56,7 @@ function error(message: string) {
 
 server.tool(
   "list_devices",
-  "List all Neat devices in the organization. Optionally filter by region or location.",
+  "List all Neat devices in the organization. Returns each device's model, serial number, firmware version, online/offline status, and room/location assignment. Devices live inside rooms in the hierarchy: Region → Location → Room → Device. Use regionId or locationId to narrow results to a specific site.",
   {
     regionId: z.number().optional().describe("Filter by region ID"),
     locationId: z.number().optional().describe("Filter by location ID"),
@@ -73,7 +73,7 @@ server.tool(
 
 server.tool(
   "get_device",
-  "Get detailed info and status for a specific Neat device by its ID.",
+  "Get detailed info and status for a specific Neat device by its ID. Returns firmware version, connection state, paired devices, and room assignment. Use this to check if a device is online before rebooting or pushing config changes.",
   {
     id: z.string().describe("The endpoint/device ID"),
   },
@@ -89,7 +89,7 @@ server.tool(
 
 server.tool(
   "get_device_settings",
-  "Get the current settings and configuration for a specific device.",
+  "Get the current settings and configuration for a specific device. Returns display, audio, network, and other settings. Always read settings before using apply_device_config so you know what is already configured.",
   {
     id: z.string().describe("The endpoint/device ID"),
   },
@@ -105,7 +105,7 @@ server.tool(
 
 server.tool(
   "apply_device_config",
-  "Push a new configuration to a device. Pass config as a JSON string of settings to apply.",
+  "Push a new configuration to a device. Config is a JSON string of setting key/value pairs — only the keys you include will be changed. Use get_device_settings first to see the current config. After applying, consider rebooting the device with reboot_device if changes require it.",
   {
     id: z.string().describe("The endpoint/device ID"),
     config: z
@@ -125,7 +125,7 @@ server.tool(
 
 server.tool(
   "reboot_device",
-  "Reboot a device and any devices paired with it (e.g., a Neat Bar paired with a Neat Pad).",
+  "Reboot a device and any devices paired with it (e.g. a Neat Bar paired with a Neat Pad will both reboot). Use after applying config changes or to troubleshoot connectivity issues. Check the device is online first with get_device.",
   {
     id: z.string().describe("The endpoint/device ID to reboot"),
   },
@@ -141,7 +141,7 @@ server.tool(
 
 server.tool(
   "delete_device",
-  "Unenroll a device from the organization. This removes it from Pulse management.",
+  "Permanently unenroll a device from the organization. The device must be re-enrolled using a room's DEC to return to Pulse management. Use list_devices or get_device first to confirm the target device.",
   {
     id: z.string().describe("The endpoint/device ID to delete"),
   },
@@ -159,7 +159,7 @@ server.tool(
 
 server.tool(
   "get_device_sensors",
-  "Get the most recent sensor data sample for a single device (temperature, humidity, CO2, VOC, people count, etc.).",
+  "Get the most recent sensor data sample for a single device. Returns temperature (°C), humidity (%rH), CO2 (ppm), VOC, and people count. Not all sensors are available on every model. For room-level data that combines multiple devices, use get_room_sensors instead.",
   {
     id: z.string().describe("The endpoint/device ID"),
   },
@@ -175,7 +175,7 @@ server.tool(
 
 server.tool(
   "get_all_device_sensors",
-  "Get the most recent sensor data for ALL devices in the organization. Optionally filter by region or location.",
+  "Get the most recent sensor data for ALL devices in the organization. Returns temperature, humidity, CO2, VOC, and people count per device. Filter by regionId or locationId to scope to a specific site. For a room-level aggregated view, use get_all_room_sensors instead.",
   {
     regionId: z.number().optional().describe("Filter by region ID"),
     locationId: z.number().optional().describe("Filter by location ID"),
@@ -192,7 +192,7 @@ server.tool(
 
 server.tool(
   "get_room_sensors",
-  "Get aggregated sensor data for a room (combines data from all devices in the room). This is the recommended method for room level environmental data.",
+  "Get aggregated sensor data for a room — the recommended method for room-level environmental monitoring. Combines data from all devices in the room. Returns temperature (°C), humidity (%rH), CO2 (ppm), VOC, and people count. Use list_rooms first to get the room ID.",
   {
     id: z.string().describe("The room ID"),
   },
@@ -208,7 +208,7 @@ server.tool(
 
 server.tool(
   "get_all_room_sensors",
-  "Get sensor data for ALL rooms in the organization.",
+  "Get aggregated sensor data for ALL rooms in the organization. Best starting point for an org-wide environmental overview. Returns temperature, humidity, CO2, VOC, and people count per room.",
   {},
   async () => {
     try {
@@ -224,7 +224,7 @@ server.tool(
 
 server.tool(
   "list_rooms",
-  "List all rooms in the organization.",
+  "List all rooms in the organization. Returns each room's ID, name, location assignment, and Device Enrollment Code (DEC). Rooms contain devices and sit inside locations in the hierarchy: Region → Location → Room → Device. Use this to find room IDs needed by other tools.",
   {},
   async () => {
     try {
@@ -238,7 +238,7 @@ server.tool(
 
 server.tool(
   "get_room",
-  "Get details for a specific room by ID.",
+  "Get details for a specific room by ID. Returns the room name, location assignment, DEC code, and assigned devices.",
   {
     id: z.string().describe("The room ID"),
   },
@@ -254,7 +254,7 @@ server.tool(
 
 server.tool(
   "create_room",
-  "Create a new room. Provide a name and optionally a locationId.",
+  "Create a new room. Returns the new room's ID and Device Enrollment Code (DEC). To provision a full room: 1) create_room with an optional locationId, 2) share the returned DEC to enroll devices on-site. Create rooms in bulk by calling this multiple times in parallel.",
   {
     name: z.string().describe("Name for the new room"),
     locationId: z.number().optional().describe("Location ID to assign the room to"),
@@ -271,7 +271,7 @@ server.tool(
 
 server.tool(
   "update_room",
-  "Update an existing room's name or location assignment.",
+  "Update an existing room's name or location assignment. Use get_room first to see current values. Provide only the fields you want to change.",
   {
     id: z.string().describe("The room ID to update"),
     name: z.string().optional().describe("New name"),
@@ -289,7 +289,7 @@ server.tool(
 
 server.tool(
   "delete_room",
-  "Delete a room by ID.",
+  "Delete a room by ID. Devices in the room become unassigned but are NOT unenrolled from the organization. Use list_rooms first to confirm the target.",
   {
     id: z.string().describe("The room ID to delete"),
   },
@@ -305,7 +305,7 @@ server.tool(
 
 server.tool(
   "regenerate_room_dec",
-  "Regenerate the Device Enrollment Code (DEC) for a room.",
+  "Regenerate the Device Enrollment Code (DEC) for a room. Invalidates the old code and returns a new one. Use if the DEC was compromised or expired. Already-enrolled devices are not affected.",
   {
     id: z.string().describe("The room ID"),
   },
@@ -323,7 +323,7 @@ server.tool(
 
 server.tool(
   "list_locations",
-  "List all locations in the organization, including their region assignments.",
+  "List all locations in the organization with their IDs, names, and region assignments. Locations sit between regions and rooms in the hierarchy: Region → Location → Room → Device. Use this to find location IDs for filtering devices/rooms or assigning new rooms.",
   {},
   async () => {
     try {
@@ -337,7 +337,7 @@ server.tool(
 
 server.tool(
   "create_location",
-  "Create a new location. Optionally assign it to an existing region.",
+  "Create a new location. Returns the new location ID. To set up a new site from scratch: 1) create_region (if needed), 2) create_location with regionId, 3) create_room with the returned locationId.",
   {
     name: z.string().describe("Name for the new location"),
     regionId: z.number().optional().describe("Region ID to assign to"),
@@ -354,7 +354,7 @@ server.tool(
 
 server.tool(
   "update_location",
-  "Update a location's name or region assignment.",
+  "Update a location's name or reassign it to a different region. Provide only the fields you want to change.",
   {
     id: z.number().describe("The location ID to update"),
     name: z.string().optional().describe("New name"),
@@ -372,7 +372,7 @@ server.tool(
 
 server.tool(
   "delete_location",
-  "Delete a location. Rooms assigned to this location will have their location assignment removed.",
+  "Delete a location. Rooms in this location become unassigned (not deleted). Use list_locations first to confirm the target.",
   {
     id: z.number().describe("The location ID to delete"),
   },
@@ -390,7 +390,7 @@ server.tool(
 
 server.tool(
   "list_regions",
-  "List all regions in the organization.",
+  "List all regions in the organization. Regions are the top level of the hierarchy: Region → Location → Room → Device. Returns each region's ID and name. Use region IDs to filter devices/sensors or scope admin users.",
   {},
   async () => {
     try {
@@ -404,7 +404,7 @@ server.tool(
 
 server.tool(
   "create_region",
-  "Create a new region.",
+  "Create a new region — the top of the org hierarchy. After creating, use create_location with the returned regionId, then create_room with the locationId to build out the full site structure.",
   {
     name: z.string().describe("Name for the new region"),
   },
@@ -420,7 +420,7 @@ server.tool(
 
 server.tool(
   "update_region",
-  "Update a region's name.",
+  "Rename a region. Does not affect locations or rooms assigned under it.",
   {
     id: z.number().describe("The region ID to update"),
     name: z.string().describe("New name for the region"),
@@ -437,7 +437,7 @@ server.tool(
 
 server.tool(
   "delete_region",
-  "Delete a region.",
+  "Delete a region. Locations in this region become unassigned (not deleted). Use list_regions first to confirm the target.",
   {
     id: z.number().describe("The region ID to delete"),
   },
@@ -455,7 +455,7 @@ server.tool(
 
 server.tool(
   "list_users",
-  "List all users in the organization.",
+  "List all users in the organization. Returns each user's ID, email, role (owner or admin), and region assignments. Owners have full org access; admins can be scoped to specific regions.",
   {},
   async () => {
     try {
@@ -469,7 +469,7 @@ server.tool(
 
 server.tool(
   "get_user",
-  "Get details for a specific user.",
+  "Get details for a specific user including their role (owner/admin) and assigned region IDs.",
   {
     id: z.string().describe("The user ID"),
   },
@@ -485,7 +485,7 @@ server.tool(
 
 server.tool(
   "create_user",
-  "Invite a new user to the organization.",
+  "Invite a new user to the organization by email. Sends an invitation. Admins can be scoped to specific regions via regionIds; owners get full org access. Use list_regions first to get valid region IDs for scoping.",
   {
     email: z.string().describe("Email address for the new user"),
     role: z
@@ -509,7 +509,7 @@ server.tool(
 
 server.tool(
   "update_user",
-  "Update a user's role or region assignments.",
+  "Update a user's role or region assignments. Use list_regions first to get valid region IDs. Provide only the fields you want to change.",
   {
     id: z.string().describe("The user ID to update"),
     role: z.enum(["owner", "admin"]).optional().describe("New role"),
@@ -530,7 +530,7 @@ server.tool(
 
 server.tool(
   "delete_user",
-  "Remove a user from the organization.",
+  "Remove a user from the organization. Immediately revokes their access. This cannot be undone — the user would need to be re-invited with create_user.",
   {
     id: z.string().describe("The user ID to delete"),
   },
@@ -548,7 +548,7 @@ server.tool(
 
 server.tool(
   "list_profiles",
-  "List all Pulse profiles in the organization.",
+  "List all Pulse profiles in the organization. Profiles are reusable device configuration templates managed in the Pulse web UI. Use this to see what profiles are available before applying device config.",
   {},
   async () => {
     try {
@@ -564,7 +564,7 @@ server.tool(
 
 server.tool(
   "get_audit_logs",
-  "List audit log entries for the organization within a date range.",
+  "List audit log entries for the organization within a date range. Tracks all changes: device enrollments, config pushes, user changes, room/location edits, etc. Dates must be ISO 8601 format. Use pageToken from the response to paginate through large result sets.",
   {
     from: z
       .string()
@@ -589,7 +589,7 @@ server.tool(
 
 server.tool(
   "generate_bug_report",
-  "Generate a bug report for one or more devices. Returns a support ID for Neat Support to retrieve logs.",
+  "Generate a bug report for one or more devices. Captures device logs and uploads them to Neat Support. Returns a support ID to share with Neat when opening a support case. Use as a last resort after checking sensors (get_device_sensors) and rebooting (reboot_device).",
   {
     ids: z
       .array(z.string())
@@ -613,7 +613,7 @@ server.tool(
 
 server.tool(
   "list_room_notes",
-  "List all notes for a specific room.",
+  "List all notes for a specific room. Notes document room setup, maintenance history, or known issues. Use list_rooms first to get the room ID.",
   {
     roomId: z.string().describe("The room ID"),
   },
@@ -629,7 +629,7 @@ server.tool(
 
 server.tool(
   "get_room_note",
-  "Get a specific note for a room.",
+  "Get a specific note for a room by its note ID. Use list_room_notes first to find note IDs.",
   {
     roomId: z.string().describe("The room ID"),
     noteId: z.string().describe("The note ID"),
@@ -646,7 +646,7 @@ server.tool(
 
 server.tool(
   "create_room_note",
-  "Create a note for a room.",
+  "Create a note for a room. Content must be a JSON string. Use notes to document commissioning details, maintenance records, or known issues. Get the room ID from list_rooms first.",
   {
     roomId: z.string().describe("The room ID"),
     content: z.string().describe("JSON string of the note content object"),
@@ -664,7 +664,7 @@ server.tool(
 
 server.tool(
   "delete_room_note",
-  "Delete a note from a room.",
+  "Permanently delete a note from a room. Use list_room_notes first to find the note ID.",
   {
     roomId: z.string().describe("The room ID"),
     noteId: z.string().describe("The note ID to delete"),
@@ -681,7 +681,7 @@ server.tool(
 
 server.tool(
   "list_all_room_notes",
-  "List all room notes across every room in the organization.",
+  "List all room notes across every room in the organization. Useful for auditing documentation coverage or searching for a note across all rooms.",
   {},
   async () => {
     try {
